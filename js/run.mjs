@@ -381,6 +381,8 @@ writeFileSync('../results/validation-results.json', JSON.stringify({
   comparison_inputs_identical: JSON.stringify(inputs.B.a) === JSON.stringify(inputs.G.a) && JSON.stringify(inputs.B.b) === JSON.stringify(inputs.G.b),
   task: comparison.task,
   wasm_sha256: createHash('sha256').update(wasmBytes).digest('hex'),
+  runner_sha256: sha(readFileSync('run.mjs')),
+  dependency_lock_sha256: sha(readFileSync('package-lock.json')),
   sandbox: 'neard 2.14.0 (protocol 88), local only',
   node: process.version,
   timings,

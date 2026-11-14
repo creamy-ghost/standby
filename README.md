@@ -2,6 +2,8 @@
 
 **Buy a bonded backup worker before the primary fails. Compare it with ordinary retry.**
 
+[Watch the captioned demo](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/demo.mp4) · [Download the interactive evidence viewer](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/report.html)
+
 Standby is a NEAR prototype for buying an agreed replacement price and delivery commitment. A buyer funds a primary task and may purchase a standby option. If the primary misses its deadline, the buyer activates the standby. The contract verifies the delivered answer and settles fees and bonds. Ordinary retry is implemented as the baseline on the same evaluator.
 
 The current workload is a synthetic 10×10 integer linear system. The buyer publishes the problem without precomputing the solution; separate worker processes solve it. The contract checks `A*x == b`. Warm standby solves speculatively before failure. This verifies an answer, not who computed it or reserved physical capacity.
@@ -29,7 +31,7 @@ Historical supplied-WASM replay: `./run.sh --fixture`. This checks the original 
 
 ## Verified local result
 
-The revised contract was built with Rust 1.95.0 and passed all **44 scenario/accounting checks** on November 14, 2026, ending with zero outstanding obligations. On identical B/G inputs, standby recovery measured **3.57 s**, retry **5.46 s**. These are one local run, not a performance guarantee. Reproduce rather than treating archived evidence as a current check.
+The revised contract was built with Rust 1.95.0 and passed all **44 scenario/accounting checks** on November 14, 2026, ending with zero outstanding obligations. On identical B/G inputs, standby recovery measured **3.57 s**, retry **5.45 s**. These are one local run, not a performance guarantee. A fresh public clone also rebuilt to the same WASM hash and passed all 44 checks. Reproduce rather than treating archived evidence as a current check.
 
 Optional captioned video capture after a passing source run: `node js/capture-demo.mjs` (Node 22+, Chromium, ffmpeg). Output: `results/demo.mp4`. It records actual browser interactions with the completed evidence viewer; it has no audio. Review before publishing.
 
@@ -63,6 +65,8 @@ NEAR is the settlement authority: it holds native-token fees and bonds, enforces
 Built during the November 2026 NEAR hackathon using Rust `near-sdk`, `near-workspaces`, the official NEAR sandbox and AI-assisted development. MIT licensed. Imported starting source and WASM provenance: `evidence/PROVENANCE.md`.
 
 Independent project disclosure: the same solo developer also works on **Where’s the Rest?**, a separate read-only cross-chain payout investigation tool. Standby has no runtime dependency on that project.
+
+Dependency pins and the current advisory assessment are in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 ## Limits and readiness
 
