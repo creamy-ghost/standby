@@ -49,9 +49,16 @@ socket.onmessage = event => {
   }
 };
 
-const send = (method, params = {}) => new Promise((resolve, reject) => {
+const send = (method, params = {}, timeoutMs = 10000) => new Promise((resolve, reject) => {
   const id = ++next;
-  pending.set(id, { resolve, reject });
+  const timer = setTimeout(() => {
+    pending.delete(id);
+    reject(new Error(`CDP ${method} timed out after ${timeoutMs}ms`));
+  }, timeoutMs);
+  pending.set(id, {
+    resolve: val => { clearTimeout(timer); resolve(val); },
+    reject: err => { clearTimeout(timer); reject(err); }
+  });
   socket.send(JSON.stringify({ id, method, params }));
 });
 
@@ -68,14 +75,27 @@ await send('Runtime.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false });
 
 let currentFrame = 0;
+let lastShotBuffer = null;
 
 async function captureSingleFrame() {
   const t0 = Date.now();
-  const shot = await send('Page.captureScreenshot', { format: 'png' });
+  let shotData = null;
+  try {
+    const shot = await send('Page.captureScreenshot', { format: 'png' }, 5000);
+    shotData = Buffer.from(shot.data, 'base64');
+    lastShotBuffer = shotData;
+  } catch (err) {
+    console.warn(`Frame ${currentFrame} warning: ${err.message}`);
+    shotData = lastShotBuffer || Buffer.alloc(0);
+  }
   const filename = String(currentFrame++).padStart(5, '0') + '.png';
-  writeFileSync(join(framesDir, filename), Buffer.from(shot.data, 'base64'));
+  if (shotData.length > 0) {
+    writeFileSync(join(framesDir, filename), shotData);
+  } else if (lastShotBuffer) {
+    writeFileSync(join(framesDir, filename), lastShotBuffer);
+  }
   const elapsed = Date.now() - t0;
-  const wait = Math.max(0, 100 - elapsed);
+  const wait = Math.max(20, 100 - elapsed);
   if (wait > 0) await delay(wait);
 }
 
@@ -129,29 +149,29 @@ async function highlight(selector) {
   }`);
 }
 
-async function waitForActionWhileCapturing(action, nextPhase, maxFrames = 80) {
+async function waitForActionWhileCapturing(action, nextPhase, timeoutMs = 60000) {
   await evaluate(`document.querySelector('[data-action="${action}"]').click()`);
-  await delay(100);
+  await delay(300);
   const start = Date.now();
-  let count = 0;
-  while (count < maxFrames) {
+  while (true) {
     await captureSingleFrame();
-    count++;
     const ready = await evaluate(`document.getElementById('progress').hidden && document.getElementById('phase-label').textContent === ${JSON.stringify(nextPhase)}`);
     if (ready) break;
-    if (Date.now() - start > 60000) throw new Error('Timeout waiting for ' + action + ' -> ' + nextPhase);
+    const err = await evaluate(`document.getElementById('error').textContent`);
+    if (err) throw new Error(`Action ${action} error: ${err}`);
+    if (Date.now() - start > timeoutMs) throw new Error(`Timeout waiting for ${action} -> ${nextPhase}`);
   }
 }
 
 async function fastActionNoFrames(action, nextPhase) {
   await evaluate(`document.querySelector('[data-action="${action}"]').click()`);
-  await delay(200);
+  await delay(400);
   const start = Date.now();
   while (true) {
     const ready = await evaluate(`document.getElementById('progress').hidden && document.getElementById('phase-label').textContent === ${JSON.stringify(nextPhase)}`);
     if (ready) break;
     if (Date.now() - start > 60000) throw new Error('Timeout waiting for ' + action + ' -> ' + nextPhase);
-    await delay(150);
+    await delay(200);
   }
 }
 
@@ -169,21 +189,17 @@ try {
   await setCaption("Your worker disappears. The deadline doesn't.");
   await evaluate('window.scrollTo({ top: 0, behavior: "smooth" })');
 
-  // Initial lab overview
-  await captureFrames(25);
+  await captureFrames(20);
 
-  // Click start: create job & get backup offer (captured in real time)
   console.log('Action: start job');
   await highlight('[data-action="start"]');
   await captureFrames(10);
-  await waitForActionWhileCapturing('start', 'Primary active', 45);
+  await waitForActionWhileCapturing('start', 'Primary active');
 
-  // Highlight primary worker and active clock
   await highlight('.participant.primary');
-  await captureFrames(25);
+  await captureFrames(20);
   await highlight('#clock');
 
-  // Fill up to target frame 120
   await captureUntil(120);
 
   // =========================================================================
@@ -196,23 +212,20 @@ try {
   console.log('--- SCENE 2: Purchase Backup; Escrow & Bond (Target: Frame 260) ---');
   await setCaption("Standby locks an agreed replacement price & 0.5 NEAR provider bond beforehand.");
   await highlight('[data-action="buy"]');
-  await captureFrames(20);
+  await captureFrames(15);
 
   console.log('Action: buy backup');
-  await waitForActionWhileCapturing('buy', 'Backup purchased', 45);
+  await waitForActionWhileCapturing('buy', 'Backup purchased');
 
-  // Highlight escrow ledger: strike payment + provider bond securely held
   await highlight('.escrow');
-  await captureFrames(45);
+  await captureFrames(25);
 
-  // Primary misses deadline
   console.log('Action: let primary miss deadline');
   await highlight('[data-action="fail_primary"]');
   await captureFrames(10);
-  await waitForActionWhileCapturing('fail_primary', 'Primary failed', 30);
+  await waitForActionWhileCapturing('fail_primary', 'Primary failed');
   await highlight('.participant.primary');
 
-  // Fill up to target frame 260
   await captureUntil(260);
 
   // =========================================================================
@@ -225,33 +238,32 @@ try {
   console.log('--- SCENE 3: Activate -> Settle -> Withdraw (Target: Frame 430) ---');
   await setCaption("When primary misses deadline: activate standby → worker delivers solution.");
   await highlight('[data-action="activate"]');
-  await captureFrames(15);
+  await captureFrames(12);
 
   console.log('Action: activate backup');
-  await waitForActionWhileCapturing('activate', 'Backup active', 30);
+  await waitForActionWhileCapturing('activate', 'Backup active');
+
   await highlight('[data-action="deliver"]');
-  await captureFrames(15);
+  await captureFrames(12);
 
   console.log('Action: deliver answer');
-  await waitForActionWhileCapturing('deliver', 'Settlement credited', 40);
+  await waitForActionWhileCapturing('deliver', 'Settlement credited');
 
-  // Update caption for verification & inspection
   await setCaption("NEAR contract verifies answer on-chain → payment credited and withdrawn.");
   await highlight('.participant.backup');
-  await captureFrames(20);
+  await captureFrames(18);
 
   console.log('Action: inspect verified solution');
   await evaluate(`document.querySelector('details.inspect').open = true`);
   await highlight('details.inspect');
-  await captureFrames(30);
+  await captureFrames(25);
 
   console.log('Action: withdraw credited funds');
   await highlight('[data-action="withdraw"]');
   await captureFrames(10);
-  await waitForActionWhileCapturing('withdraw', 'Funds withdrawn', 35);
+  await waitForActionWhileCapturing('withdraw', 'Funds withdrawn');
   await highlight('.escrow');
 
-  // Fill up to target frame 430
   await captureUntil(430);
 
   // =========================================================================
@@ -262,21 +274,18 @@ try {
   // =========================================================================
   console.log('--- SCENE 4: Cold-Retry Comparison (Target: Frame 560) ---');
   await send('Page.navigate', { url: origin + '/evidence' });
-  await delay(900);
+  await delay(1200);
   await injectCaptionBar();
   await setCaption("Cold retry hires after failure. Standby prepared while the clock was ticking.");
   await evaluate(`document.querySelector('section').scrollIntoView({ behavior: 'smooth', block: 'start' })`);
-  await captureFrames(30);
+  await captureFrames(20);
 
-  // Highlight Warm Standby card
   await highlight('article.card:nth-of-type(1)');
-  await captureFrames(45);
+  await captureFrames(35);
 
-  // Highlight Cold Retry card
   await highlight('article.card:nth-of-type(2)');
-  await captureFrames(45);
+  await captureFrames(35);
 
-  // Fill up to target frame 560
   await captureUntil(560);
 
   // =========================================================================
@@ -287,11 +296,10 @@ try {
   // =========================================================================
   console.log('--- SCENE 5: Backup Slashing & Refund (Target: Frame 700) ---');
   await send('Page.navigate', { url: origin });
-  await delay(900);
+  await delay(1200);
   await injectCaptionBar();
   await setCaption("If backup fails: contract slashes the bond and refunds 3.1 NEAR to buyer.");
 
-  // Fast setup path: reset -> start -> buy -> fail_primary -> activate
   console.log('Action: fast-forward to Backup Active state');
   await fastActionNoFrames('reset', 'No job yet');
   await fastActionNoFrames('start', 'Primary active');
@@ -299,21 +307,16 @@ try {
   await fastActionNoFrames('fail_primary', 'Primary failed');
   await fastActionNoFrames('activate', 'Backup active');
 
-  // Show Backup Active state with the fail_backup option
   await highlight('[data-action="fail_backup"]');
-  await captureFrames(20);
+  await captureFrames(15);
 
   console.log('Action: trigger backup deadline miss (fail_backup)');
-  await waitForActionWhileCapturing('fail_backup', 'Settlement credited', 45);
+  await waitForActionWhileCapturing('fail_backup', 'Settlement credited');
 
-  // Highlight Buyer participant card showing 3.1 NEAR credit refund
   await highlight('.participant.buyer');
-  await captureFrames(45);
+  await captureFrames(35);
 
-  // Highlight confirmed activity log: bond slashed and buyer refunded
   await highlight('#activity');
-
-  // Fill up to target frame 700
   await captureUntil(700);
 
   // =========================================================================
@@ -324,13 +327,12 @@ try {
   // =========================================================================
   console.log('--- SCENE 6: Interactive Decision Calculator (Target: Frame 815) ---');
   await send('Page.navigate', { url: origin + '/evidence' });
-  await delay(900);
+  await delay(1200);
   await injectCaptionBar();
   await setCaption("Interactive calculator: evaluate when deadline value covers the standby premium.");
   await evaluate(`document.querySelectorAll('section')[1].scrollIntoView({ behavior: 'smooth', block: 'center' })`);
-  await captureFrames(25);
+  await captureFrames(20);
 
-  // Smoothly adjust Failure probability to 25%
   console.log('Action: adjust failure probability to 25%');
   for (let val = 10; val <= 25; val += 3) {
     await evaluate(`{
@@ -338,10 +340,9 @@ try {
       el.value = ${val};
       el.dispatchEvent(new Event('input'));
     }`);
-    await captureFrames(3);
+    await captureFrames(2);
   }
 
-  // Adjust Deadline value to 20 NEAR
   console.log('Action: adjust deadline value to 20 NEAR');
   for (let val = 10; val <= 20; val += 2) {
     await evaluate(`{
@@ -349,14 +350,12 @@ try {
       el.value = ${val};
       el.dispatchEvent(new Event('input'));
     }`);
-    await captureFrames(3);
+    await captureFrames(2);
   }
 
-  // Highlight net benefit
   await highlight('.big#benefit');
-  await captureFrames(35);
+  await captureFrames(25);
 
-  // Fill up to target frame 815
   await captureUntil(815);
 
   // =========================================================================
@@ -367,13 +366,13 @@ try {
   // =========================================================================
   console.log('--- SCENE 7: Full Verification & Reproduction (Target: Frame 919) ---');
   await send('Page.navigate', { url: origin + '/summary' });
-  await delay(800);
+  await delay(1200);
   await injectCaptionBar();
   await setCaption("All 44 checks pass on local NEAR sandbox. Reproducible on GitHub.");
-  await captureFrames(25);
+  await captureFrames(20);
 
   await highlight('.terminal-box');
-  await captureFrames(35);
+  await captureFrames(30);
 
   await highlight('.reproduce-box');
   await captureUntil(919);

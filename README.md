@@ -2,7 +2,7 @@
 
 **Decentralized fault-tolerance & SLA enforcement for autonomous AI swarms on NEAR.**
 
-[Download the interactive evidence viewer](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/report.html)
+[Open Live Interactive Evidence Viewer](https://creamy-ghost.github.io/standby/) · [Download standalone report.html](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/report.html)
 
 Standby is a NEAR protocol prototype for buying an agreed replacement price and delivery commitment before a task fails. A buyer funds a primary task and may purchase a standby option. If the primary misses its deadline, the buyer activates the standby. The contract verifies the delivered answer and settles fees and bonds. Ordinary retry is implemented as the baseline on the same evaluator.
 
