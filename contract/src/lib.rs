@@ -248,6 +248,7 @@ impl StandbyValidation {
         require!(env::block_timestamp_ms() < self.offers[oi].option_expiry_ms, "option expired");
         require!(env::predecessor_account_id() == self.jobs[ji].buyer, "only job buyer");
         require!(matches!(self.jobs[ji].status, JobStatus::Created | JobStatus::PrimaryActive | JobStatus::PrimaryFailed), "job not open");
+        require!(self.jobs[ji].standby_offer_id.is_none(), "standby already exists");
         require!(self.jobs[ji].retry.is_none(), "retry already exists");
         let need = self.offers[oi].premium.0 + self.offers[oi].strike.0;
         require!(env::attached_deposit().as_yoctonear() == need, "exact premium+strike required");
@@ -482,7 +483,8 @@ impl StandbyValidation {
         for i in 0..n {
             let mut acc: i128 = 0;
             for j in 0..n {
-                acc += (job.a[i * n + j] as i128) * (solution[j] as i128);
+                acc = acc.checked_add((job.a[i * n + j] as i128) * (solution[j] as i128))
+                    .expect("solution residual overflow");
             }
             require!(acc == job.b[i] as i128, "solution does not satisfy job");
         }

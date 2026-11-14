@@ -11,7 +11,9 @@ import { createInterface } from 'node:readline';
 import { performance } from 'node:perf_hooks';
 const { Worker, parseNEAR } = pkg;
 
-const wasm = '../contract/target/wasm32-unknown-unknown/release/standby_validation.wasm';
+const wasm = process.env.STANDBY_WASM;
+if (!wasm) throw new Error('Use ../run.sh to select and verify the WASM artifact');
+const legacyFixture = process.env.STANDBY_FIXTURE === '1';
 const N = (s) => BigInt(parseNEAR(s));
 const results = [];
 const timings = {};
@@ -41,12 +43,13 @@ function coldSolve(inputPath) {
     const t0 = performance.now();
     const proc = spawn(process.execPath, ['../workers/solve.mjs', inputPath], { cwd: import.meta.dirname });
     let out = '';
+    proc.on('error', reject);
     proc.stdout.on('data', d => out += d);
     proc.stderr.on('data', d => process.stderr.write(d));
     proc.on('close', code => {
       const wall = performance.now() - t0;
-      try { const j = JSON.parse(out.trim()); resolve({ ...j, wall_ms: wall }); }
-      catch(e) { reject(new Error(`worker parse: ${out}`)); }
+      try { const j = JSON.parse(out.trim()); if (code !== 0 || !j.ok) throw new Error(j.error || `worker exited ${code}`); resolve({ ...j, wall_ms: wall }); }
+      catch(e) { reject(new Error(`worker failed: ${e.message}: ${out}`)); }
     });
   });
 }
@@ -73,6 +76,8 @@ function warmStandby(inputPath) {
 // --- Setup ---
 mkdirSync('../results/inputs', { recursive: true });
 const worker = await Worker.init({ network: 'sandbox', rm: true });
+const warmWorkers = [];
+try {
 const root = worker.rootAccount;
 const protocolConfig = await worker.provider.sendJsonRpc('EXPERIMENTAL_protocol_config', { finality: 'final' });
 const storageAmountPerByte = BigInt(protocolConfig.runtime_config.storage_amount_per_byte);
@@ -84,10 +89,23 @@ const retryWorker = await root.createSubAccount('retry', { initialBalance: parse
 const attacker = await root.createSubAccount('attacker', { initialBalance: parseNEAR('50') });
 
 async function nowMs() { const b = await worker.provider.sendJsonRpc('block', { finality: 'final' }); return Number(BigInt(b.header.timestamp) / 1000000n); }
-const delay = (ms) => new Promise(r => setTimeout(r, ms));
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function advanceTo(target) {
-  await worker.provider.fastForward(Math.max(1, Math.ceil((target - (await nowMs())) / 1000) + 5));
-  for (let i = 0; i < 200; i++) { await delay(100); if ((await nowMs()) >= target) return nowMs(); }
+  // fastForward takes blocks, not seconds. Re-read the chain timestamp after
+  // small batches so a longer setup cannot overshoot the option window.
+  for (let i = 0; i < 1000; i++) {
+    const now = await nowMs();
+    if (now >= target) return now;
+    await worker.provider.fastForward(1);
+    // The RPC acknowledges the request before the final head reflects it.
+    // Wait for time to advance before requesting another skipped block.
+    let advanced = false;
+    for (let poll = 0; poll < 200; poll++) {
+      await delay(100);
+      if ((await nowMs()) > now) { advanced = true; break; }
+    }
+    if (!advanced) throw new Error('sandbox clock stalled after fast-forward');
+  }
   throw new Error(`sandbox time did not reach ${target}`);
 }
 
@@ -115,7 +133,7 @@ async function accounting(label) {
 
 // Deadlines
 const base = await nowMs();
-const PRIMARY_DEADLINE = base + 60000, ACTIVATE_AFTER = base + 65000, OPTION_EXPIRY = base + 120000, DELIVERY_DEADLINE = base + 180000;
+const PRIMARY_DEADLINE = base + 120000, ACTIVATE_AFTER = base + 125000, OPTION_EXPIRY = base + 180000, DELIVERY_DEADLINE = base + 240000;
 
 // Generate 6 jobs: A=primary success, B=standby success, C=standby fail, D=unsold, E=unaccepted+standby, F=unaccepted+retry
 const jobKeys = ['A','B','C','D','E','F','G','H'];
@@ -123,7 +141,7 @@ const jobKeys = ['A','B','C','D','E','F','G','H'];
 // H = ordinary retry failure (primary accepted then disappears, retry never delivers)
 const inputs = {}, jobs = {}, offers = {};
 for (const k of jobKeys) {
-  const sys = generateSystem(10, 100 + k.charCodeAt(0));
+  const sys = generateSystem(10, 100 + (k === 'G' ? 'B' : k).charCodeAt(0));
   inputs[k] = { job_ref: `validation-job-${k}`, ...sys, input_hash: '' };
   inputs[k].input_hash = sha(JSON.stringify({ n: sys.n, a: sys.a, b: sys.b }));
   writeFileSync(`../results/inputs/job-${k}.json`, JSON.stringify(inputs[k], null, 2));
@@ -148,17 +166,34 @@ for (const k of ['A','B','C','D','E']) {
     activate_after_ms: ACTIVATE_AFTER, option_expiry_ms: OPTION_EXPIRY, delivery_deadline_ms: DELIVERY_DEADLINE,
   }, { attachedDeposit: STANDBY_BOND.toString(), gas: '300000000000000' }));
 }
+// Competing offers can be posted before selection. Only one may be purchased.
+let competingOffer;
+if (!legacyFixture) {
+  competingOffer = Number(await standby.call(contract, 'create_standby_offer', {
+    job_id: jobs.B, resource_id: 'competing-B', premium: PREMIUM.toString(), strike: STRIKE.toString(),
+    activate_after_ms: ACTIVATE_AFTER, option_expiry_ms: OPTION_EXPIRY, delivery_deadline_ms: DELIVERY_DEADLINE,
+  }, { attachedDeposit: STANDBY_BOND.toString() }));
+}
 // Buy options for A,B,C,E (D stays unsold)
 for (const k of ['A','B','C','E']) {
   await buyer.call(contract, 'buy_standby_option', { offer_id: offers[k] }, { attachedDeposit: (PREMIUM + STRIKE).toString() });
+}
+if (!legacyFixture) {
+  await expectFail(buyer.call(contract, 'buy_standby_option', { offer_id: competingOffer }, {
+    attachedDeposit: (PREMIUM + STRIKE).toString(),
+  }), 'standby already exists', 'second purchased standby rejected');
+  record('selected standby preserved', (await contract.view('get_job', { job_id: jobs.B })).standby_offer_id === offers.B);
 }
 await accounting('after funding');
 
 // --- Warm standby workers for B and E (pre-solve while reserved) ---
 const warmB = warmStandby(`../results/inputs/job-B.json`);
 const warmE = warmStandby(`../results/inputs/job-E.json`);
+warmWorkers.push(warmB, warmE);
 const readyB = await warmB.ready;
 const readyE = await warmE.ready;
+assert.equal(readyB.type, 'ready', readyB.error);
+assert.equal(readyE.type, 'ready', readyE.error);
 record('warm standby B ready', readyB.solve_ms !== undefined, `solve_ms=${readyB.solve_ms?.toFixed(1)}`);
 record('warm standby E ready', readyE.solve_ms !== undefined, `solve_ms=${readyE.solve_ms?.toFixed(1)}`);
 timings.warm_standby_B_solve_ms = readyB.solve_ms;
@@ -275,6 +310,11 @@ await standby.call(contract, 'reclaim_unsold_offer', { offer_id: offers.D });
 addCredit(standby, STANDBY_BOND);
 record('unpurchased offer bond released', (await contract.view('get_offer', { offer_id: offers.D })).status === 'Reclaimed');
 await expectFail(standby.call(contract, 'reclaim_unsold_offer', { offer_id: offers.D }), 'not offered', 'repeated reclaim rejected');
+if (!legacyFixture) {
+  await standby.call(contract, 'reclaim_unsold_offer', { offer_id: competingOffer });
+  addCredit(standby, STANDBY_BOND);
+  record('unselected competing offer reclaimed', (await contract.view('get_offer', { offer_id: competingOffer })).status === 'Reclaimed');
+}
 await accounting('after expiry and reclaim');
 
 // --- 9) Slash standby C ---
@@ -328,24 +368,40 @@ const comparison = {
     note: 'primary A succeeds; its purchased standby option expires and the provider keeps the premium',
   },
   verdict: timings.standby_B_recovery_wall_ms < timings.retry_G_recovery_wall_ms
-    ? 'In this local run, warm standby recovered faster than cold retry, but the task is tiny and sandbox transaction latency dominates. Standby still costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. Single fixed-order run with different seeded systems; fixture prices exclude gas, storage funding and provider operating costs. No general economic superiority is established.'
-    : 'In this local run, ordinary cold retry recovered as fast or faster than warm standby and was cheaper. The task is tiny and sandbox transaction latency dominates. Standby costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. Single fixed-order run with different seeded systems; fixture prices exclude gas, storage funding and provider operating costs. No general economic superiority is established.',
+    ? 'In this local run, warm standby recovered faster than cold retry, but the task is tiny and sandbox transaction latency dominates. Standby still costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. Single fixed-order run with identical B/G inputs; fixture prices exclude gas, storage funding and provider operating costs. No general economic superiority is established.'
+    : 'In this local run, ordinary cold retry recovered as fast or faster than warm standby and was cheaper. The task is tiny and sandbox transaction latency dominates. Standby costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. Single fixed-order run with identical B/G inputs; fixture prices exclude gas, storage funding and provider operating costs. No general economic superiority is established.',
 };
 
 const ok = results.every(r => r.ok);
 const wasmBytes = readFileSync(wasm);
 writeFileSync('../results/validation-results.json', JSON.stringify({
   ok,
+  generated_at: new Date().toISOString(),
+  artifact_mode: legacyFixture ? 'supplied historical WASM' : 'source build',
+  comparison_inputs_identical: JSON.stringify(inputs.B.a) === JSON.stringify(inputs.G.a) && JSON.stringify(inputs.B.b) === JSON.stringify(inputs.G.b),
   task: comparison.task,
   wasm_sha256: createHash('sha256').update(wasmBytes).digest('hex'),
   sandbox: 'neard 2.14.0 (protocol 88), local only',
   node: process.version,
   timings,
   comparison,
+  jobs: Object.fromEntries(await Promise.all(jobKeys.map(async k => [k, await contract.view('get_job', { job_id: jobs[k] })]))),
+  final_obligations_yocto: await contract.view('obligations'),
   results,
 }, null, 2));
 console.log('\n--- COMPARISON ---');
 console.log(JSON.stringify(comparison, null, 2));
 console.log(ok ? '\nALL CHECKS PASSED' : '\nSOME CHECKS FAILED');
-await worker.tearDown();
-process.exit(ok ? 0 : 1);
+process.exitCode = ok ? 0 : 1;
+} catch (error) {
+  writeFileSync('../results/failure.json', JSON.stringify({
+    ok: false, generated_at: new Date().toISOString(),
+    artifact_mode: legacyFixture ? 'supplied historical WASM' : 'source build',
+    wasm_sha256: sha(readFileSync(wasm)), results, error: String(error),
+  }, null, 2));
+  console.error(error);
+  process.exitCode = 1;
+} finally {
+  for (const w of warmWorkers) w.proc.kill();
+  await worker.tearDown();
+}

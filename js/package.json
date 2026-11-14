@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "scripts": { "test": "node run.mjs" },
+  "scripts": { "test": "../run.sh" },
   "dependencies": { "near-workspaces": "5.0.0" }
 }
