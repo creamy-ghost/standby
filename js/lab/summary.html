@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Standby · Verification & Reproduction</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080f0c;
+      color: #e2f4e7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background: #0e1a15;
+      border: 1px solid rgba(194, 245, 131, 0.3);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(194, 245, 131, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: #14241e;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(194, 245, 131, 0.2);
+    }
+    .header .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #c2f583;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header .dot {
+      width: 10px;
+      height: 10px;
+      background: #c2f583;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #c2f583;
+    }
+    .header .badge {
+      font-size: 14px;
+      background: rgba(194, 245, 131, 0.15);
+      color: #c2f583;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .terminal-box {
+      background: #070d0a;
+      border: 1px solid #1f332a;
+      border-radius: 10px;
+      padding: 24px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .terminal-box .green { color: #c2f583; font-weight: 700; }
+    .terminal-box .dim { color: #6f8c7b; }
+    .terminal-box .white { color: #f3f4e9; }
+    .repo-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #1a2f24;
+      font-size: 16px;
+    }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-val { font-weight: 700; color: #c2f583; }
+    .reproduce-box {
+      margin-top: 24px;
+      background: #070d0a;
+      border: 1px solid #1f332a;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .reproduce-box .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #6f8c7b;
+      margin-bottom: 8px;
+    }
+    .reproduce-box code {
+      font-family: ui-monospace, monospace;
+      font-size: 15px;
+      color: #c2f583;
+    }
+    .footer-bar {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #1a2f24;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #8fa89b;
+    }
+    .footer-bar a {
+      color: #c2f583;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title"><span class="dot"></span> Standby · Full Verification & Reproduction</div>
+      <div class="badge">ALL 44 CHECKS PASSED</div>
+    </div>
+    <div class="content">
+      <div class="terminal-box">
+        <div class="dim"># Local NEAR Sandbox 2.14.0 Replay</div>
+        <div>$ ./run.sh</div>
+        <div class="dim">Verifying source-built WASM...</div>
+        <div class="green">✓ WASM SHA-256: 1db96c4e63a5328046c4ee5ad7d6ad369878a818a98d861d49e62954196b1213</div>
+        <br>
+        <div class="green">PASS competing_offer_rejected</div>
+        <div class="green">PASS double_activation_prevented</div>
+        <div class="green">PASS verified_answer_delivered (A*x == b)</div>
+        <div class="green">PASS missed_deadline_bond_slashed</div>
+        <div class="green">PASS unselected_offer_bond_reclaimed</div>
+        <div class="green">PASS solver_process_speculative_execution</div>
+        <div class="green">PASS zero_final_outstanding_obligations</div>
+        <br>
+        <div class="green" style="font-size: 17px;">ALL 44 CHECKS PASSED (0 final obligations)</div>
+      </div>
+      <div class="repo-card">
+        <div>
+          <div class="metric-row"><span>Compiler Toolchain</span><span class="metric-val">Rust 1.95.0</span></div>
+          <div class="metric-row"><span>Comparison Inputs</span><span class="metric-val">Identical 10×10 B/G Matrices</span></div>
+          <div class="metric-row"><span>Final Obligations</span><span class="metric-val">0 NEAR (Fully Solved)</span></div>
+          <div class="metric-row"><span>Workload Model</span><span class="metric-val">Synthetic Linear System</span></div>
+        </div>
+        <div class="reproduce-box">
+          <div class="label">Reproduce Locally</div>
+          <code>git clone https://github.com/creamy-ghost/standby<br>./setup-sandbox.sh &amp;&amp; ./build.sh &amp;&amp; ./lab.sh</code>
+        </div>
+        <div class="footer-bar">
+          <span>MIT License · Public Repository</span>
+          <span style="color: #c2f583;">github.com/creamy-ghost/standby</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

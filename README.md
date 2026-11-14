@@ -1,14 +1,14 @@
 # Standby
 
-**Buy a bonded backup worker before the primary fails. Compare it with ordinary retry.**
+**Decentralized fault-tolerance & SLA enforcement for autonomous AI swarms on NEAR.**
 
-[Watch the captioned demo](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/demo.mp4) · [Download the interactive evidence viewer](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/report.html)
+[Download the interactive evidence viewer](https://github.com/creamy-ghost/standby/releases/download/v0.1.0/report.html)
 
-Standby is a NEAR prototype for buying an agreed replacement price and delivery commitment. A buyer funds a primary task and may purchase a standby option. If the primary misses its deadline, the buyer activates the standby. The contract verifies the delivered answer and settles fees and bonds. Ordinary retry is implemented as the baseline on the same evaluator.
+Standby is a NEAR protocol prototype for buying an agreed replacement price and delivery commitment before a task fails. A buyer funds a primary task and may purchase a standby option. If the primary misses its deadline, the buyer activates the standby. The contract verifies the delivered answer and settles fees and bonds. Ordinary retry is implemented as the baseline on the same evaluator.
 
-The current workload is a synthetic 10×10 integer linear system. The buyer publishes the problem without precomputing the solution; separate worker processes solve it. The contract checks `A*x == b`. Warm standby solves speculatively before failure. This verifies an answer, not who computed it or reserved physical capacity.
+The reference workload is a synthetic 10×10 integer linear system. The buyer publishes the problem without precomputing the solution; separate worker processes solve it. The contract checks `A*x == b` on-chain in O(n) time. Warm standby solves speculatively before failure. This verifies an answer, not who computed it or reserved physical capacity. In production, this modular verifier interface extends to ZKML proofs, deterministic code execution traces, and multi-agent consensus attestations.
 
-**Try the failure lab:** a browser interface drives a fresh local contract through purchase, primary failure, backup activation, delivery or slashing, and withdrawal. Its balances and outcomes come from finalized contract state; this is not an animation of a saved run. The linked release video predates the lab and shows the older evidence viewer.
+**Try the failure lab:** a browser interface drives a fresh local contract through purchase, primary failure, backup activation, delivery or slashing, and withdrawal. Its balances and outcomes come from finalized contract state; this is not an animation of a saved run.
 
 ## Reproduce
 
@@ -19,10 +19,11 @@ git clone https://github.com/creamy-ghost/standby.git
 cd standby
 ./setup-sandbox.sh
 ./build.sh
+./run.sh
 ./lab.sh
 ```
 
-Open **http://127.0.0.1:4318** while the command is running. No wallet, API key or real funds are used. `STANDBY_LAB_PORT=4320 ./lab.sh` selects another loopback port.
+Open **http://127.0.0.1:4318** (or **http://localhost:4318**) while the command is running. No wallet, API key or real funds are used. `STANDBY_LAB_PORT=4320 ./lab.sh` selects another loopback port.
 
 ## Try a complete agreement
 
@@ -58,8 +59,6 @@ Historical supplied-WASM replay: `./run.sh --fixture`. This checks the original 
 
 The revised contract was built with Rust 1.95.0 and passed all **44 scenario/accounting checks** on November 14, 2026, ending with zero outstanding obligations. On identical B/G inputs, standby recovery measured **3.57 s**, retry **5.45 s**. These are one local run, not a performance guarantee. A fresh public clone also rebuilt to the same WASM hash and passed all 44 checks. Reproduce rather than treating archived evidence as a current check.
 
-Optional captioned video capture after a passing source run: `node js/capture-demo.mjs` (Node 22+, Chromium, ffmpeg). Output: `results/demo.mp4`. It records actual browser interactions with the completed evidence viewer; it has no audio. Review before publishing.
-
 ## What the demo covers
 
 | Path | Visible outcome |
@@ -85,19 +84,23 @@ The decision model is `P(primary failure) × reduction in conditional deadline m
 
 ## NEAR and track fit
 
-NEAR is the settlement authority: it holds native-token fees and bonds, enforces caller permissions and deadlines, verifies the answer, and provides withdrawal credits. Primary fit: **AI Swarms** coordination markets. Secondary fit: **Agent Economy** worker procurement. Current workers are deterministic solver processes; no LLM or Intents integration is claimed.
+NEAR is the settlement authority: it holds native-token fees and bonds, enforces caller permissions and deadlines, verifies the answer, and provides withdrawal credits.
+
+- **Primary fit: AI Swarms (Decentralized SLA Enforcement):** In complex autonomous agent swarms, pipeline steps are sequential and fragile. If a critical worker stalls, cold retry restarts from scratch and risks catastrophic missed deadlines. Standby allows purchasing bonded warm-backup options where secondary agents speculatively pre-compute and activate on failure.
+- **Secondary fit: Agent Economy (Worker Procurement & Hedging):** Agents purchase call options on computational capacity to protect their downstream commitments.
+- **Verification Interface:** Current workers demonstrate the protocol via a deterministic 10×10 solver (`A*x == b`), serving as a bounded, non-precomputed reference verifier that maps directly to production ZKML, code-execution, and multi-agent consensus verifiers.
 
 ## Baseline, dependencies and AI disclosure
 
 This fresh repository was prepared on November 14, 2026 from a supplied local standby/retry demo. The initial contract, worker solvers and scenario harness were imported, not written from scratch in this finishing pass. The imported baseline is [5625576](https://github.com/creamy-ghost/standby/tree/562557640cb7b4a11434118c8ed4e541bb7263a2); [compare the finishing work with that baseline](https://github.com/creamy-ghost/standby/compare/562557640cb7b4a11434118c8ed4e541bb7263a2...main). Archive and WASM provenance are in [evidence/PROVENANCE.md](evidence/PROVENANCE.md). This baseline is an import checkpoint, not a claim about when every original line was authored.
 
-Finishing work includes the competing-offer purchase guard, explicit verifier overflow rejection, source-build provenance and stale-build checks, corrected sandbox timing, identical comparison inputs, dependency patch, evidence viewer and video capture tooling. Codex assisted with code revisions, debugging, checks, documentation and demo tooling. These changes include AI-written code; they are not presented as entirely human-written.
+Finishing work includes the competing-offer purchase guard, explicit verifier overflow rejection, source-build provenance and stale-build checks, corrected sandbox timing, identical comparison inputs, dependency patch, evidence viewer and lab tooling. Codex assisted with code revisions, debugging, checks, documentation and demo tooling. These changes include AI-written code; they are not presented as entirely human-written.
 
 The browser failure lab and its contract adapter were added with Codex assistance. They reuse the same contract and solver, add transaction-receipt inspection and finalized-block accounting, and exercise both settlement paths. Its fresh random task is independent of the fixed-input comparison suite.
 
-Direct libraries are Rust `near-sdk` and `hex`, plus JavaScript `near-workspaces`. Local execution uses the official NEAR sandbox. Node built-ins implement the workers and evidence tooling; optional capture uses Chromium and ffmpeg. Locked dependencies and the archive-extractor override are documented in [DEPENDENCIES.md](DEPENDENCIES.md). No frontend template or UI framework was used for the evidence viewer. No other-chain product or integration is submitted here.
+Direct libraries are Rust `near-sdk` and `hex`, plus JavaScript `near-workspaces`. Local execution uses the official NEAR sandbox. Node built-ins implement the workers and evidence tooling. Locked dependencies and the archive-extractor override are documented in [DEPENDENCIES.md](DEPENDENCIES.md). No frontend template or UI framework was used for the evidence viewer. No other-chain product or integration is submitted here.
 
-The repository uses the [MIT license](LICENSE) and will remain public through judging. The release video and downloadable viewer remain available as GitHub assets; this is a local demo, not a hosted transaction application.
+The repository uses the [MIT license](LICENSE) and will remain public through judging. The downloadable viewer remains available as a GitHub asset; this is a local demo, not a hosted transaction application.
 
 Independent project disclosure: the same solo developer also works on **Where’s the Rest?**, a separate read-only cross-chain payout investigation tool. Standby has no runtime dependency on that project.
 

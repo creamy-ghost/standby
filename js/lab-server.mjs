@@ -17,6 +17,7 @@ const staticFiles = new Map([
   ['/lab.css', ['js/lab/lab.css', 'text/css; charset=utf-8']],
   ['/lab.mjs', ['js/lab/lab.mjs', 'text/javascript; charset=utf-8']],
   ['/evidence', ['results/report.html', 'text/html; charset=utf-8']],
+  ['/summary', ['js/lab/summary.html', 'text/html; charset=utf-8']],
 ]);
 let origin;
 const server = createServer(async (req, res) => {
@@ -26,7 +27,8 @@ const server = createServer(async (req, res) => {
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
   const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); };
   try {
-    if (req.headers.host !== new URL(origin).host) return json(403, { error: 'Use the loopback URL printed by lab.sh.' });
+    const validHosts = new Set([new URL(origin).host, `localhost:${server.address().port}`]);
+    if (!validHosts.has(req.headers.host)) return json(403, { error: 'Use the loopback URL printed by lab.sh.' });
     const url = new URL(req.url, origin);
     if (req.method === 'GET' && url.pathname === '/api/state') return json(200, lab.publicState());
     if (req.method === 'GET' && url.pathname === '/api/trace') {
@@ -36,7 +38,8 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === 'POST' && url.pathname === '/api/action') {
       // JSON plus a same-origin custom header prevents cross-site form actions.
-      if (req.headers.origin !== origin || req.headers['x-standby-lab'] !== '1' ||
+      const originHost = req.headers.origin ? new URL(req.headers.origin).host : '';
+      if (!validHosts.has(originHost) || req.headers['x-standby-lab'] !== '1' ||
           req.headers['content-type'] !== 'application/json') return json(403, { error: 'Only same-origin lab actions are accepted.' });
       let bytes = 0, body = '';
       for await (const chunk of req) {
@@ -56,9 +59,19 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === 'GET' && staticFiles.has(url.pathname)) {
       const [file, type] = staticFiles.get(url.pathname);
-      if (!existsSync(join(root, file))) return json(404, { error: 'Run ./run.sh to generate the comparison evidence first.' });
+      if (!existsSync(join(root, file))) {
+        if (url.pathname === '/evidence') {
+          res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self'");
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          return res.end(`<!doctype html><html><body style="font-family:system-ui,sans-serif;background:#080f0c;color:#e2f4e7;padding:30px;text-align:center;">
+            <h3 style="color:#c2f583;margin-bottom:12px;">Comparison Evidence Not Generated Yet</h3>
+            <p style="color:#8fa89b;">Run <code style="color:#c2f583;background:#14241e;padding:3px 6px;border-radius:4px;">./run.sh</code> in your terminal to generate the live scenario comparison and 44 checks, then refresh.</p>
+          </body></html>`);
+        }
+        return json(404, { error: 'Run ./run.sh to generate the comparison evidence first.' });
+      }
       // The archived self-contained report intentionally contains inline code.
-      if (url.pathname === '/evidence') res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
+      if (url.pathname === '/evidence' || url.pathname === '/summary') res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
       res.writeHead(200, { 'Content-Type': type });
       return res.end(readFileSync(join(root, file)));
     }
@@ -66,6 +79,14 @@ const server = createServer(async (req, res) => {
   } catch (error) {
     json(error.status || 500, { error: String(error.message || error) });
   }
+});
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Error: Port ${port} is already in use.`);
+    console.error(`👉 Try starting with another port: STANDBY_LAB_PORT=${port + 2} ./lab.sh\n`);
+    process.exit(1);
+  }
+  throw err;
 });
 server.listen(port, '127.0.0.1', () => {
   origin = 'http://127.0.0.1:' + server.address().port;
