@@ -4,6 +4,12 @@ This is the local Standby repository. The active user goal now authorizes engine
 
 Read README.md for scope and run instructions; SUBMISSION.md records release requirements. Preserve evidence/arena/ unchanged. Prices are fixture terms, workers solve a synthetic workload, and timings are local observations.
 
+## Interactive failure lab
+
+The user explicitly requested implementing the proposed failure lab before returning to video work. It is implemented locally: `./lab.sh`, then http://127.0.0.1:4318. `FAILURE-LAB.md` records the plan and acceptance results. The UI drives a fresh source-verified contract through funded job/quote, option purchase, missed primary deadline, activation, verified backup delivery or missed backup delivery with slashing, and separate withdrawals. It exposes invalid-answer rejection, actual receipts, finalized-block money snapshots, clock/deadline display and downloadable traces. A separate backup process prepares the answer. There is no new contract, external deployment, wallet integration, actual spending or video revision.
+
+Both integration paths passed. Both paths also passed via Chromium controls, including keyboard purchase, refresh, real JSON download, archived comparison, 390px layout and connection loss/recovery; no uncaught browser exceptions. The existing source-built suite passed 44/44 again with zero final obligations. Results remain ignored under results/lab/ and results/validation-results.json. The adapter fixes an observed finality race by awaiting receipt finalization and reading each money snapshot at one finalized block. No new dependencies. The historical release/video are still the older evidence-viewer version.
+
 ## Current work
 
 The historical supplied WASM passed 41 checks. The fresh public clone at f37ad75 subsequently rebuilt to the same WASM and passed 44/44; the final tar-patched environment also passed 44/44, with runner/lock hashes recorded in the run JSON. Current source adds a guard against purchasing competing standby offers and an explicit residual-overflow rejection. The runner adds a competing-offer regression, identical B/G inputs, artifact identification, final job states and cleanup. Builds record source/WASM hashes, and the default runner rejects missing/stale source builds. A generated self-contained evidence viewer includes an explicitly conditional deadline-value model.

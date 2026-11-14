@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152b24">
+  <title>Standby · Failure lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23152b24'/%3E%3Cpath d='M12 13h16M12 20h12M12 27h16' stroke='%23d4f587' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/lab.css">
+  <script type="module" src="/lab.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Standby home"><span class="brand-mark" aria-hidden="true">≋</span> Standby</a>
+    <span class="tagline">Bonded backup for agent jobs</span>
+    <span class="environment"><span class="dot" aria-hidden="true"></span> Local NEAR sandbox</span>
+  </header>
+  <main>
+    <div class="intro">
+      <div><p class="eyebrow">THE FAILURE LAB</p><h1>A worker stops.<br>The agreement holds.</h1></div>
+      <p class="lede">Buy backup before a task fails. Then put the agreement to the test: deliver a verified answer, or miss the deadline and see the refund.</p>
+    </div>
+    <div class="notice"><strong>Real contract calls. Local fixture funds.</strong> A separate worker solves a synthetic 10 × 10 system. No wallet or real money needed.</div>
+
+    <section class="lab" aria-labelledby="lab-title">
+      <div class="lab-heading"><div><p class="eyebrow">ONE JOB · THREE PARTICIPANTS</p><h2 id="lab-title">A backup commitment you can test.</h2></div><span id="connection" class="pill">Connecting…</span></div>
+      <ol class="steps" aria-label="Job progress">
+        <li data-step="0"><span>1</span> Fund job</li><li data-step="1"><span>2</span> Buy backup</li><li data-step="2"><span>3</span> Primary fails</li><li data-step="3"><span>4</span> Activate</li><li data-step="4"><span>5</span> Settle</li><li data-step="5"><span>6</span> Withdraw</li>
+      </ol>
+      <div id="clock" class="clock" hidden><span>Last finalized snapshot <strong id="clock-time"></strong></span><span>Primary due <strong id="primary-due"></strong></span><span>Backup due <strong id="backup-due"></strong></span></div>
+
+      <div class="participants">
+        <article class="participant buyer"><div class="role-line"><span class="role-icon" aria-hidden="true">↗</span><span class="eyebrow">BUYER</span><span id="buyer-status" class="role-status">Ready</span></div><h3>Needs the result.</h3><p id="buyer-description">Funds the job and chooses a backup commitment.</p><div class="amount-row"><span>Withdrawable credit</span><strong id="buyer-credit">0 NEAR</strong></div><div class="amount-row"><span>Transferred to wallet</span><strong id="buyer-paid">0 NEAR</strong></div></article>
+        <article class="participant primary"><div class="role-line"><span class="role-icon" aria-hidden="true">⌁</span><span class="eyebrow">PRIMARY</span><span id="primary-status" class="role-status">Not started</span></div><h3>First to take the job.</h3><p id="primary-description">Accepts a 1 NEAR fee and posts a 0.5 NEAR bond.</p><div class="amount-row"><span>Primary fee held</span><strong id="primary-fee">0 NEAR</strong></div><div class="amount-row"><span>Primary bond held</span><strong id="primary-bond">0 NEAR</strong></div></article>
+        <article class="participant backup"><div class="role-line"><span class="role-icon" aria-hidden="true">⇄</span><span class="eyebrow">BACKUP</span><span id="backup-status" class="role-status">Not started</span></div><h3>Ready before failure.</h3><p id="backup-description">Offers replacement delivery for 1 NEAR + a 0.1 NEAR premium.</p><div class="amount-row"><span>Withdrawable credit</span><strong id="backup-credit">0 NEAR</strong></div><div class="amount-row"><span>Transferred to wallet</span><strong id="backup-paid">0 NEAR</strong></div></article>
+      </div>
+
+      <div class="workspace">
+        <div class="action-panel">
+          <div class="section-label"><span id="step-label">YOUR FIRST MOVE</span><span id="phase-label">No job yet</span></div>
+          <h3 id="action-title">Give the workers a job.</h3>
+          <p id="action-description">Create a fresh task, fund its primary worker and get a bonded backup offer. You decide whether to buy it next.</p>
+          <div id="actions" class="actions">
+            <button type="button" data-action="start">Create job &amp; get backup offer <span aria-hidden="true">↗</span></button>
+            <button type="button" data-action="buy" hidden>Buy backup · 1.1 NEAR <span aria-hidden="true">↗</span></button>
+            <button type="button" data-action="fail_primary" hidden>Let primary miss deadline <span aria-hidden="true">→</span></button>
+            <button type="button" data-action="activate" hidden>Activate backup <span aria-hidden="true">→</span></button>
+            <button type="button" data-action="deliver" hidden>Deliver &amp; verify answer <span aria-hidden="true">↗</span></button>
+            <button type="button" data-action="fail_backup" class="secondary" hidden>Make backup miss deadline</button>
+            <button type="button" data-action="invalid" class="text-button" hidden>Test the verifier with an invalid answer</button>
+            <button type="button" data-action="withdraw" hidden>Withdraw credited funds <span aria-hidden="true">↗</span></button>
+          </div>
+          <p id="step-note" class="step-note">Fixture terms: 1 NEAR primary fee · 0.1 premium · 1 strike · 0.5 bond per worker.</p>
+          <div id="progress" class="progress" role="status" hidden><span class="spinner" aria-hidden="true"></span><span id="progress-text"></span></div>
+          <p id="error" class="error" role="alert" hidden></p>
+          <div id="result" class="result" hidden><span class="eyebrow" id="result-label"></span><p id="result-text"></p></div>
+          <div class="session-tools"><button type="button" data-action="reset" class="text-button" hidden>Reset lab</button><a id="download" href="/api/trace" download hidden>Download run evidence ↓</a></div>
+        </div>
+
+        <aside class="escrow" aria-labelledby="escrow-title">
+          <div class="section-label"><span>READ FROM THE CONTRACT</span><span id="accounting" class="accounting">Awaiting job</span></div>
+          <h3 id="escrow-title">Where is the money?</h3>
+          <div class="ledger"><div><span>Primary fee + bond held</span><strong id="held-primary">0 NEAR</strong></div><div><span>Backup premium + strike held</span><strong id="held-payment">0 NEAR</strong></div><div><span>Backup bond held</span><strong id="held-bond">0 NEAR</strong></div><div><span>Withdrawable credits</span><strong id="credits-total">0 NEAR</strong></div><div class="ledger-total"><span>Total obligations</span><strong id="obligations">0 NEAR</strong></div></div>
+          <p id="escrow-note">Held funds become account credits when the contract settles. Credits reach wallets only after withdrawal.</p>
+          <div class="funding-note"><strong>What backup costs</strong><p>The buyer commits 2.1 NEAR before failure: a 1 NEAR primary fee plus 1.1 NEAR for backup. Worker bonds are separate. These fixture prices exclude gas and storage.</p></div>
+        </aside>
+      </div>
+
+      <div class="activity-heading"><h3>What actually happened</h3><span id="transaction-count">0 contract calls</span></div>
+      <p id="activity-empty" class="empty">Create a job to see confirmed calls and contract results here.</p>
+      <ol id="activity" class="activity" aria-label="Contract activity"></ol>
+      <details class="inspect"><summary>Inspect the task, answer and source build</summary><div class="inspect-grid"><div><h4>The published task</h4><p>The buyer publishes A and b. A separate process computes x; the contract checks every row of A × x = b.</p><pre id="task">No task yet.</pre></div><div><h4>Observed answer</h4><pre id="answer">No verified answer delivered.</pre><h4>Source-built WASM · SHA-256</h4><code id="wasm">Awaiting source verification</code><p id="observed-at" class="muted"></p></div></div></details>
+    </section>
+
+    <section class="explanation"><div><p class="eyebrow">WHY THE CONTRACT MATTERS</p><h2>Delivery earns payment.<br>Missing delivery has a cost.</h2></div><div><p>NEAR holds the fees and bonds, enforces who can act and when, checks the answer, and records the resulting credits. Both successful delivery and a missed deadline have explicit settlement rules.</p><p>Backup prepares the answer speculatively. This proves neither reserved physical capacity nor commercial demand. The workers are deterministic solver processes.</p></div></section>
+    <section class="comparison" aria-labelledby="comparison-title"><p class="eyebrow">GO DEEPER</p><h2 id="comparison-title">Would you pay for the backup?</h2><p>Inspect the separately recorded standby-versus-retry run and change the deadline-value assumptions. The comparison is archived evidence; the lab above runs a new session.</p><details id="comparison-details"><summary>Open comparison &amp; value calculator</summary><p><a href="/evidence" target="_blank" rel="noopener">Open evidence viewer in a new tab ↗</a></p><iframe id="comparison-frame" title="Archived comparison evidence and deadline-value calculator" loading="lazy"></iframe><p id="comparison-error" hidden>Comparison evidence is missing. Run ./run.sh to generate it, then reopen this section.</p></details></section>
+    <footer><strong>Standby</strong><span>Local prototype · Synthetic workload · All NEAR balances are fixtures</span><a href="https://github.com/creamy-ghost/standby" target="_blank" rel="noopener">Source &amp; reproduction ↗</a></footer>
+  </main>
+  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+</body>
+</html>

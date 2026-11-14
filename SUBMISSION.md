@@ -4,12 +4,13 @@ Organizer rules checked November 14, 2026: https://nearhackathon.com/HACKATHON.m
 
 ## Ready-to-paste project description
 
-Standby lets a buyer purchase a bonded backup-worker option before a primary task fails. After a missed deadline, the buyer activates the agreed replacement. A NEAR contract verifies the delivered integer-system solution and settles fees, refunds and bonds. A reproducible local demo compares warm standby with ordinary cold retry on identical inputs, exposes the extra premium and advance funding, and includes a conditional deadline-value calculator. The workload is synthetic; commercial demand and physical capacity reservation remain unproved.
+Standby lets a buyer purchase a bonded backup-worker option before a primary task fails. Its local browser lab drives real NEAR sandbox transactions: buy backup, let the primary miss its deadline, activate replacement, then deliver a verified answer or trigger a missed-delivery refund and bond slashing. A final withdrawal step distinguishes settlement credit from completed payment. Judges can test invalid-answer rejection and download actual receipts and finalized state. A separate reproducible suite compares standby with cold retry on identical inputs and exposes the premium, advance funding and conditional deadline value. The workload is synthetic; commercial demand and physical capacity reservation remain unproved.
 
 Suggested tracks: `swarms`, `agents`. Working name: Standby; final name and tracks require the user's selection.
 
 ## Handoff status
 
+- Interactive failure lab: `./lab.sh`, then open http://127.0.0.1:4318. Fresh local contract calls, separate backup process, both settlement paths, invalid-answer rejection, withdrawals and trace export. The existing release video shows the earlier viewer; record the new lab when preparing its replacement.
 - Verified: fresh public clone rebuilt to the same WASM hash and passed 44/44; final patched dependency environment also passed 44/44. Pinned Rust 1.95.0 source build; all 44 sandbox checks; zero final obligations; matching B/G inputs. Generated evidence: results/build.json and results/validation-results.json.
 - Verified: dependency audit has zero moderate/high/critical findings (remaining low findings documented in DEPENDENCIES.md).
 - Verified: browser decision boundaries, input labels and mobile horizontal width against fresh output.
