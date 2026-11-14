@@ -32,6 +32,16 @@ Public release assets: https://github.com/creamy-ghost/standby/releases/tag/v0.1
 
 ## Draft X text
 
-A worker misses its deadline. Hire again, or pay for a bonded backup in advance? Standby compares both on NEAR, including the premium and capital trade-off. Built at NEAR HACKATHON. @NEARProtocol #NEARHackathon https://github.com/creamy-ghost/standby
+A worker misses its deadline. Standby uses NEAR escrow and bonds for backup delivery, then compares it with cold retry. When would you pay the premium? Built at NEAR HACKATHON. @NEARProtocol #NEARHackathon https://github.com/creamy-ghost/standby
 
 Attach results/demo.mp4 (also available as a GitHub release asset). The draft includes the approved public repository link and is below 280 characters even without URL shortening. The human publishes the post.
+
+## Rules and presentation checks
+
+The current rules require both the public repository link and public X demo-post link. Do not rely on the support bot's uncertainty about acceptance without a post. For this local-only demo, attach the video; screenshots alone are insufficient under Q-012. Keep the repository and release assets available through judging (November 18); retaining demo access through November 25 follows the organizers' recommendation.
+
+Claude Code and Codex perform reproducibility/feature screening and preliminary reporting; humans decide. Technical implementation, design, impact, originality and sustainability are historical preparation guidance, not a published scoring rubric for this event. No prize-stacking formula or private judge preferences are established.
+
+The current video shows completed source-run evidence and a real calculator action changing its visible result. It does not show a live buyer wallet transaction. Describe it as an evidence-viewer walkthrough. A future replacement clip could make the settlement story clearer by showing a buyer action through verified delivery and credited payment.
+
+If also submitting Where’s the Rest?, its README must name Standby as well. Standby's README already names that independent project.

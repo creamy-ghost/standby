@@ -13,6 +13,8 @@ The current workload is a synthetic 10×10 integer linear system. The buyer publ
 Requires Linux x86_64, Node >=20.15, Rust via rustup, and network access to install dependencies. No wallet, API key or funded account is needed. Setup downloads a hash-pinned official NEAR sandbox 2.14.0 binary. All NEAR balances are local fixture funds.
 
 ```bash
+git clone https://github.com/creamy-ghost/standby.git
+cd standby
 ./setup-sandbox.sh
 ./build.sh
 ./run.sh
@@ -62,7 +64,15 @@ The decision model is `P(primary failure) × reduction in conditional deadline m
 
 NEAR is the settlement authority: it holds native-token fees and bonds, enforces caller permissions and deadlines, verifies the answer, and provides withdrawal credits. Primary fit: **AI Swarms** coordination markets. Secondary fit: **Agent Economy** worker procurement. Current workers are deterministic solver processes; no LLM or Intents integration is claimed.
 
-Built during the November 2026 NEAR hackathon using Rust `near-sdk`, `near-workspaces`, the official NEAR sandbox and AI-assisted development. MIT licensed. Imported starting source and WASM provenance: `evidence/PROVENANCE.md`.
+## Baseline, dependencies and AI disclosure
+
+This fresh repository was prepared on November 14, 2026 from a supplied local standby/retry demo. The initial contract, worker solvers and scenario harness were imported, not written from scratch in this finishing pass. The imported baseline is [5625576](https://github.com/creamy-ghost/standby/tree/562557640cb7b4a11434118c8ed4e541bb7263a2); [compare the finishing work with that baseline](https://github.com/creamy-ghost/standby/compare/562557640cb7b4a11434118c8ed4e541bb7263a2...main). Archive and WASM provenance are in [evidence/PROVENANCE.md](evidence/PROVENANCE.md). This baseline is an import checkpoint, not a claim about when every original line was authored.
+
+Finishing work includes the competing-offer purchase guard, explicit verifier overflow rejection, source-build provenance and stale-build checks, corrected sandbox timing, identical comparison inputs, dependency patch, evidence viewer and video capture tooling. Codex assisted with code revisions, debugging, checks, documentation and demo tooling. These changes include AI-written code; they are not presented as entirely human-written.
+
+Direct libraries are Rust `near-sdk` and `hex`, plus JavaScript `near-workspaces`. Local execution uses the official NEAR sandbox. Node built-ins implement the workers and evidence tooling; optional capture uses Chromium and ffmpeg. Locked dependencies and the archive-extractor override are documented in [DEPENDENCIES.md](DEPENDENCIES.md). No frontend template or UI framework was used for the evidence viewer. No other-chain product or integration is submitted here.
+
+The repository uses the [MIT license](LICENSE) and will remain public through judging. The release video and downloadable viewer remain available as GitHub assets; this is a local demo, not a hosted transaction application.
 
 Independent project disclosure: the same solo developer also works on **Where’s the Rest?**, a separate read-only cross-chain payout investigation tool. Standby has no runtime dependency on that project.
 
