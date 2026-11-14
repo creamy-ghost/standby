@@ -1,0 +1,103 @@
+PASS accounting after funding: obligations=17900000000000000000000000 primary=11000000000000000000000000 offers=6900000000000000000000000 retry=0 credits=0 storage=322336B
+PASS warm standby B ready: solve_ms=1.9
+PASS warm standby E ready: solve_ms=1.4
+PASS primary completes useful task
+PASS primary A solution verified off-chain
+PASS accounting after primary A complete: obligations=17900000000000000000000000 primary=9500000000000000000000000 offers=6900000000000000000000000 retry=0 credits=1500000000000000000000000 storage=322344B
+Receipt: DiaAwNRMMybN1PSSgqUgcR1t6s61idPUzDMAkydToaGS
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: solution does not satisfy job"}}}}
+PASS zero solution rejected: solution does not satisfy job
+Receipt: F2hQQEzvuPQRtybSJwVyucNQsuUNG1LCNZvghtizHJjU
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: solution does not satisfy job"}}}}
+PASS cross-job solution rejected: solution does not satisfy job
+Receipt: 2z4ZfygyaWD9VLSKWAc1etEfwf6RSuhh192TKgihNA64
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: only primary"}}}}
+PASS wrong caller rejected: only primary
+PASS accepted primary failure refunds buyer
+PASS unaccepted primary expiry refunds buyer
+Receipts: BiC6kHK2Cn39Fs7xVc5y7vuEB1kcNgPApr7jSaXZi4Wk, 5nWDFY6rPiFKfBYdFMeXX8iow2Kfic5p5gyjNJNQP7YK
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not created"}}}}
+PASS late acceptance after unaccepted expiry rejected: not created
+Receipt: HckdqjTaFaoPAZTLWWip8tF2bAUa3sFx2n4PTnUYnyuK
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not created"}}}}
+PASS repeated unaccepted expiry rejected: not created
+PASS accounting after primary failures: obligations=17900000000000000000000000 primary=0 offers=6900000000000000000000000 retry=0 credits=11000000000000000000000000 storage=322594B
+Receipt: F5cS8n8o4ahLjCdTmKs3f9n1aPhekdb6xEw6NB56aMc1
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not optioned"}}}}
+PASS repeated activation rejected: not optioned
+Receipt: ENHjo9bcCSxNdbeJncnGNtAvHeAa4jaBKMRgGZxnmTpx
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not optioned"}}}}
+PASS unpurchased offer cannot activate: not optioned
+PASS standby delivers useful task after primary disappears
+Receipt: 2o786Nuk5mWy2TgphcGMcnX4ga3HY7EGZX9VWzx9MuTd
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not activated"}}}}
+PASS repeated standby delivery rejected: not activated
+PASS accounting after standby B complete: obligations=17900000000000000000000000 primary=0 offers=5300000000000000000000000 retry=0 credits=12600000000000000000000000 storage=322762B
+PASS unaccepted primary -> standby delivers
+PASS accounting after standby E complete: obligations=17900000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=14200000000000000000000000 storage=322762B
+PASS ordinary retry delivers useful task
+Receipt: GUnR5P8UUigLFJWNHtdDmu6Q9mycZMg2sUrPZa7SExCQ
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not retry active"}}}}
+PASS repeated retry delivery rejected: not retry active
+PASS accounting after retry G complete: obligations=19400000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=15700000000000000000000000 storage=323072B
+PASS unaccepted primary -> ordinary retry delivers
+PASS accounting after retry F complete: obligations=20900000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=17200000000000000000000000 storage=323132B
+PASS accounting after retry H accepted: obligations=22400000000000000000000000 primary=0 offers=3700000000000000000000000 retry=1500000000000000000000000 credits=17200000000000000000000000 storage=323276B
+Receipt: EwcsXaPsocDwuC48PXSG6mLtHgaUJoMkoyLqBzRaHwyD
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not optioned"}}}}
+PASS repeated expiry rejected: not optioned
+Receipts: 5eua8kwVAHx1cTCXRGtet1Qfs7TGqZVaPZzQTJoqhqeP, CSx6KyTm31VEdvzPwUTA6NNirYM6EpA1KW7zFQGhUSCF
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: option expired"}}}}
+PASS expired unpurchased offer cannot be bought: option expired
+PASS unpurchased offer bond released
+Receipt: AB7RGjFrmhEu4DJKMKysLELJH24Q2UVfss3zyqMEnbVJ
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not offered"}}}}
+PASS repeated reclaim rejected: not offered
+PASS accounting after expiry and reclaim: obligations=22400000000000000000000000 primary=0 offers=1600000000000000000000000 retry=1500000000000000000000000 credits=19300000000000000000000000 storage=323276B
+PASS standby failure slashes and refunds buyer
+Receipt: 7WBcySPmVLvcfDT4E7aP5fn7gkWJUxq2opYrbrbPqwCB
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: not activated"}}}}
+PASS repeated slash rejected: not activated
+PASS retry failure refunds buyer
+Receipt: EWMNMWgzrg3Kx6mqYZWxk89v5TeWGu9tbUk3rnrDvfRJ
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: retry not live"}}}}
+PASS repeated retry failure rejected: retry not live
+PASS accounting after standby C slash and retry H failure: obligations=22400000000000000000000000 primary=0 offers=0 retry=0 credits=22400000000000000000000000 storage=323276B
+Receipt: EQGTT2U7SbXixhmwp36cvC8RXU1YSdiEjWvJuAoNHC4Q
+	Failure [dev-60098-78848.test.near]: Error: {"index":0,"kind":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: insufficient credit"}}}}
+PASS over-withdrawal rejected: insufficient credit
+PASS accounting after withdrawals: obligations=0 primary=0 offers=0 retry=0 credits=0 storage=323276B
+PASS all credits withdrawn
+PASS no live obligations remain
+
+--- COMPARISON ---
+{
+  "task": "solve 10x10 integer linear system A x = b; contract verifies A*x == b exactly",
+  "buyer_does_not_precompute": true,
+  "standby_B": {
+    "recovery_wall_ms": 7107.949141000005,
+    "worker_presolve_ms": 1.876958000000002,
+    "replacement_price_yocto": "1100000000000000000000000",
+    "net_buyer_cost_after_primary_refund_yocto": "600000000000000000000000",
+    "buyer_capital_held_before_failure_yocto": "2100000000000000000000000",
+    "provider_bond_yocto": "500000000000000000000000",
+    "note": "warm standby pre-solved during reservation; recovery window is activation + delivery"
+  },
+  "retry_G": {
+    "recovery_wall_ms": 5455.700807999994,
+    "worker_cold_solve_ms": 41.71275500000047,
+    "replacement_price_yocto": "1000000000000000000000000",
+    "net_buyer_cost_after_primary_refund_yocto": "500000000000000000000000",
+    "buyer_capital_held_before_failure_yocto": "1000000000000000000000000",
+    "provider_bond_yocto": "500000000000000000000000",
+    "note": "cold retry solves after failure; recovery window is create + accept + solve + delivery"
+  },
+  "primary_A": {
+    "wall_ms": 1686.9515739999988,
+    "buyer_cost_yocto": "1000000000000000000000000",
+    "note": "primary succeeds; if a standby option had been purchased, its premium would be wasted"
+  },
+  "verdict": "In this local run, ordinary cold retry recovered as fast or faster than warm standby and was cheaper. The task is tiny and sandbox transaction latency dominates. Standby costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. No general economic superiority is established."
+}
+
+ALL CHECKS PASSED

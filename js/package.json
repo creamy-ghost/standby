@@ -1,0 +1,9 @@
+{
+  "name": "standby-validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": { "test": "node run.mjs" },
+  "dependencies": { "near-workspaces": "5.0.0" }
+}

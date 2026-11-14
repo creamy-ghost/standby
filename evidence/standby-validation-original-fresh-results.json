@@ -1,0 +1,254 @@
+{
+  "ok": true,
+  "task": "solve 10x10 integer linear system A x = b; contract verifies A*x == b exactly",
+  "wasm_sha256": "5fac1008fc9ede09fe360d2521af334f8bc467cab8b8fda85607061b740d6e07",
+  "sandbox": "neard 2.14.0 (protocol 88), local only",
+  "node": "v22.23.0",
+  "timings": {
+    "warm_standby_B_solve_ms": 0.9011029999999991,
+    "warm_standby_E_solve_ms": 0.784395,
+    "primary_A_wall_ms": 1662.803058999998,
+    "primary_A_worker_ms": 26.54818100000557,
+    "standby_B_recovery_wall_ms": 7089.905857000005,
+    "standby_B_wait_ms": 32492.514174,
+    "standby_E_recovery_wall_ms": 3555.1814969999978,
+    "retry_G_recovery_wall_ms": 5444.6498779999965,
+    "retry_G_worker_ms": 24.924379000003682,
+    "retry_F_recovery_wall_ms": 5370.993165000007
+  },
+  "comparison": {
+    "task": "solve 10x10 integer linear system A x = b; contract verifies A*x == b exactly",
+    "buyer_does_not_precompute": true,
+    "standby_B": {
+      "recovery_wall_ms": 7089.905857000005,
+      "worker_presolve_ms": 0.9011029999999991,
+      "replacement_price_yocto": "1100000000000000000000000",
+      "net_buyer_cost_after_primary_refund_yocto": "600000000000000000000000",
+      "buyer_capital_held_before_failure_yocto": "2100000000000000000000000",
+      "provider_bond_yocto": "500000000000000000000000",
+      "note": "warm standby pre-solved during reservation; recovery window is activation + delivery"
+    },
+    "retry_G": {
+      "recovery_wall_ms": 5444.6498779999965,
+      "worker_cold_solve_ms": 24.924379000003682,
+      "replacement_price_yocto": "1000000000000000000000000",
+      "net_buyer_cost_after_primary_refund_yocto": "500000000000000000000000",
+      "buyer_capital_held_before_failure_yocto": "1000000000000000000000000",
+      "provider_bond_yocto": "500000000000000000000000",
+      "note": "cold retry solves after failure; recovery window is create + accept + solve + delivery"
+    },
+    "primary_A": {
+      "wall_ms": 1662.803058999998,
+      "buyer_cost_yocto": "1000000000000000000000000",
+      "note": "primary succeeds; if a standby option had been purchased, its premium would be wasted"
+    },
+    "verdict": "In this local run, ordinary cold retry recovered as fast or faster than warm standby and was cheaper. The task is tiny and sandbox transaction latency dominates. Standby costs a non-refundable premium when the primary succeeds, locks more buyer capital before failure, and a failed standby leaves the job without output. No general economic superiority is established."
+  },
+  "results": [
+    {
+      "name": "accounting after funding",
+      "ok": true,
+      "detail": "obligations=17900000000000000000000000 primary=11000000000000000000000000 offers=6900000000000000000000000 retry=0 credits=0 storage=322336B"
+    },
+    {
+      "name": "warm standby B ready",
+      "ok": true,
+      "detail": "solve_ms=0.9"
+    },
+    {
+      "name": "warm standby E ready",
+      "ok": true,
+      "detail": "solve_ms=0.8"
+    },
+    {
+      "name": "primary completes useful task",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "primary A solution verified off-chain",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "accounting after primary A complete",
+      "ok": true,
+      "detail": "obligations=17900000000000000000000000 primary=9500000000000000000000000 offers=6900000000000000000000000 retry=0 credits=1500000000000000000000000 storage=322344B"
+    },
+    {
+      "name": "zero solution rejected",
+      "ok": true,
+      "detail": "solution does not satisfy job"
+    },
+    {
+      "name": "cross-job solution rejected",
+      "ok": true,
+      "detail": "solution does not satisfy job"
+    },
+    {
+      "name": "wrong caller rejected",
+      "ok": true,
+      "detail": "only primary"
+    },
+    {
+      "name": "accepted primary failure refunds buyer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "unaccepted primary expiry refunds buyer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "late acceptance after unaccepted expiry rejected",
+      "ok": true,
+      "detail": "not created"
+    },
+    {
+      "name": "repeated unaccepted expiry rejected",
+      "ok": true,
+      "detail": "not created"
+    },
+    {
+      "name": "accounting after primary failures",
+      "ok": true,
+      "detail": "obligations=17900000000000000000000000 primary=0 offers=6900000000000000000000000 retry=0 credits=11000000000000000000000000 storage=322594B"
+    },
+    {
+      "name": "repeated activation rejected",
+      "ok": true,
+      "detail": "not optioned"
+    },
+    {
+      "name": "unpurchased offer cannot activate",
+      "ok": true,
+      "detail": "not optioned"
+    },
+    {
+      "name": "standby delivers useful task after primary disappears",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repeated standby delivery rejected",
+      "ok": true,
+      "detail": "not activated"
+    },
+    {
+      "name": "accounting after standby B complete",
+      "ok": true,
+      "detail": "obligations=17900000000000000000000000 primary=0 offers=5300000000000000000000000 retry=0 credits=12600000000000000000000000 storage=322762B"
+    },
+    {
+      "name": "unaccepted primary -> standby delivers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "accounting after standby E complete",
+      "ok": true,
+      "detail": "obligations=17900000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=14200000000000000000000000 storage=322762B"
+    },
+    {
+      "name": "ordinary retry delivers useful task",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repeated retry delivery rejected",
+      "ok": true,
+      "detail": "not retry active"
+    },
+    {
+      "name": "accounting after retry G complete",
+      "ok": true,
+      "detail": "obligations=19400000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=15700000000000000000000000 storage=323072B"
+    },
+    {
+      "name": "unaccepted primary -> ordinary retry delivers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "accounting after retry F complete",
+      "ok": true,
+      "detail": "obligations=20900000000000000000000000 primary=0 offers=3700000000000000000000000 retry=0 credits=17200000000000000000000000 storage=323132B"
+    },
+    {
+      "name": "accounting after retry H accepted",
+      "ok": true,
+      "detail": "obligations=22400000000000000000000000 primary=0 offers=3700000000000000000000000 retry=1500000000000000000000000 credits=17200000000000000000000000 storage=323276B"
+    },
+    {
+      "name": "repeated expiry rejected",
+      "ok": true,
+      "detail": "not optioned"
+    },
+    {
+      "name": "expired unpurchased offer cannot be bought",
+      "ok": true,
+      "detail": "option expired"
+    },
+    {
+      "name": "unpurchased offer bond released",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repeated reclaim rejected",
+      "ok": true,
+      "detail": "not offered"
+    },
+    {
+      "name": "accounting after expiry and reclaim",
+      "ok": true,
+      "detail": "obligations=22400000000000000000000000 primary=0 offers=1600000000000000000000000 retry=1500000000000000000000000 credits=19300000000000000000000000 storage=323276B"
+    },
+    {
+      "name": "standby failure slashes and refunds buyer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repeated slash rejected",
+      "ok": true,
+      "detail": "not activated"
+    },
+    {
+      "name": "retry failure refunds buyer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repeated retry failure rejected",
+      "ok": true,
+      "detail": "retry not live"
+    },
+    {
+      "name": "accounting after standby C slash and retry H failure",
+      "ok": true,
+      "detail": "obligations=22400000000000000000000000 primary=0 offers=0 retry=0 credits=22400000000000000000000000 storage=323276B"
+    },
+    {
+      "name": "over-withdrawal rejected",
+      "ok": true,
+      "detail": "insufficient credit"
+    },
+    {
+      "name": "accounting after withdrawals",
+      "ok": true,
+      "detail": "obligations=0 primary=0 offers=0 retry=0 credits=0 storage=323276B"
+    },
+    {
+      "name": "all credits withdrawn",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no live obligations remain",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
